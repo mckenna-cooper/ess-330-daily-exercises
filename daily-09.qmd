@@ -1,16 +1,13 @@
 ---
+title: "Daily Exercise 09: Linear Modeling of Ozone Concentration"
 author: "Mckenna Cooper"
-project: "Daily Exercise 9: Linear Model of Airquality Data"
-  title: "ess-330-daily-exercises"
-  output-dir: docs
-
-format: 
-  html:
-    self-contained: true    
+date: "2025-03-03"
+format: html
+execute:
+  echo: true
 ---
 
 ```{r}
-install.packages(c("tidyverse", "visdat", "broom"))
 library(tidyverse)
 library(visdat)
 library(broom)

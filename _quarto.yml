@@ -1,0 +1,7 @@
+project:
+  title: "ess-330-daily-exercises"
+  output-dir: docs
+
+format:
+  html:
+    self-contained: true
