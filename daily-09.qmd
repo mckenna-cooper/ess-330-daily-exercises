@@ -1,0 +1,77 @@
+---
+author: "Mckenna Cooper"
+project: "Daily Exercise 9: Linear Model of Airquality Data"
+  title: "ess-330-daily-exercises"
+  output-dir: docs
+
+format: 
+  html:
+    self-contained: true    
+---
+
+```{r}
+install.packages(c("tidyverse", "visdat", "broom"))
+library(tidyverse)
+library(visdat)
+library(broom)
+```
+
+## 1.
+
+```{r}
+data(airquality)
+?airquality
+```
+
+## 2.
+
+```{r}
+library(naniar)
+vis_miss(airquality)
+```
+
+vis_dat was only resulting in errors for me so I used vis_miss instead. This data does need cleaning since Ozone and Solar R. are missing some values.
+
+```{r}
+clean_airquality <- na.omit(airquality)
+```
+
+## 3. 
+
+I choose temperature as my predictor variable because ozone levels often correlate with temperature due to atmospheric conditions.
+
+```{r}
+model <- lm(Ozone ~ Temp, data = clean_airquality)
+```
+
+## 4.
+
+```{r}
+summary(model)
+```
+
+The p-value of temp is very small (\<2e-16), meaning temperature significantly affects ozone levels. Due to this, this model seems valid.
+
+## 5.
+
+Here, **R² = 0.488** means \~48.8% of the variance in `Ozone` is explained by `Temp`.
+
+## 6.
+
+```{r}
+a <- augment(model, clean_airquality)
+```
+
+## 7.
+
+```{r}
+library(ggplot2)
+
+ggplot2::ggplot(a, aes(x = Ozone, y = .fitted)) +
+  geom_point() +
+  geom_abline(intercept = 0, slope = 1, color = "red") + 
+  labs(title = "Actual vs. Predicted Ozone Levels",
+       subtitle = paste("Correlation:", round(cor(a$Ozone, a$.fitted), 2)),
+       x = "Actual Ozone",
+       y = "Predicted Ozone")
+```
