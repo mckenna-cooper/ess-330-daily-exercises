@@ -1,10 +1,7 @@
 ---
-title: "daily-11"
-format: html
----
-
----
 title: "Exploratory Data Analysis and Linear Regression in R"
+author: "Mckenna Cooper"
+date: "3/11/2025"
 format: 
   html:
     self-contained: true
