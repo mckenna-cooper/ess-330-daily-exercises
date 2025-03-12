@@ -1,0 +1,104 @@
+---
+title: "daily-11"
+format: html
+---
+
+---
+title: "Exploratory Data Analysis and Linear Regression in R"
+format: 
+  html:
+    self-contained: true
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(broom)
+library(ggpubr)
+library(recipes)
+```
+
+## Part 1: Normality Testing
+
+### Load and Explore Dataset
+```{r}
+data("airquality")
+str(airquality)
+summary(airquality)
+```
+
+### Shapiro-Wilk Normality Test
+```{r}
+shapiro.test(airquality$Ozone)
+shapiro.test(airquality$Temp)
+shapiro.test(airquality$Solar.R)
+shapiro.test(airquality$Wind)
+```
+
+*The Shapiro-Wilk test checks if a variable follows a normal distribution.*
+- **Null Hypothesis (H0):** Data is normally distributed.
+- **Alternative Hypothesis (H1):** Data is not normally distributed.
+- **Interpretation:** If p-value < 0.05, reject H0 (data is not normal).
+
+## Part 2: Data Transformation and Feature Engineering
+
+### Convert Month to Season
+```{r}
+airquality <- airquality %>% 
+  mutate(Season = case_when(
+    Month %in% c(11, 12, 1) ~ "Winter",
+    Month %in% c(2, 3, 4) ~ "Spring",
+    Month %in% c(5, 6, 7) ~ "Summer",
+    Month %in% c(8, 9, 10) ~ "Fall"
+  ))
+
+table(airquality$Season)
+```
+
+## Part 3: Data Preprocessing
+
+### Normalize Predictor Variables
+```{r}
+rec <- recipe(Ozone ~ Temp + Solar.R + Wind + Season, data = airquality) %>%
+  step_normalize(all_numeric_predictors()) %>%
+  step_impute_mean(all_numeric_predictors())
+
+prep_rec <- prep(rec)
+processed_data <- bake(prep_rec, new_data = airquality)
+```
+
+*Normalization scales variables to have a mean of 0 and standard deviation of 1, improving model performance.*
+
+## Part 4: Building a Linear Regression Model
+
+### Fit Linear Model
+```{r}
+lm_model <- lm(Ozone ~ ., data = processed_data)
+sum_model <- summary(lm_model)
+print(sum_model)
+```
+
+*Key interpretations:*
+- **Coefficients:** Show how each predictor affects Ozone.
+- **R-squared:** Indicates how much variation in Ozone is explained by predictors.
+- **p-values:** Determine statistical significance.
+
+## Part 5: Model Diagnostics
+
+### Residual Analysis
+```{r}
+aug_data <- augment(lm_model)
+
+gghist <- ggplot(aug_data, aes(.resid)) + geom_histogram(bins=20, fill="blue", alpha=0.6) + ggtitle("Residuals Histogram")
+ggqq <- ggqqplot(aug_data$.resid) + ggtitle("QQ Plot of Residuals")
+ggarrange(gghist, ggqq, ncol=2, nrow=1)
+```
+
+### Actual vs Predicted Plot
+```{r}
+ggscatter(aug_data, x = "Ozone", y = ".fitted",
+          add = "reg.line", conf.int = TRUE,
+          cor.coef = TRUE, cor.method = "spearman",
+          ellipse = TRUE)
+```
+
+**Conclusion:** Evaluate model strength based on R-squared, correlation coefficient, and residuals distribution.

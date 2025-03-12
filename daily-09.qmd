@@ -33,7 +33,7 @@ vis_dat was only resulting in errors for me so I used vis_miss instead. This dat
 clean_airquality <- na.omit(airquality)
 ```
 
-## 3. 
+## 3.
 
 I choose temperature as my predictor variable because ozone levels often correlate with temperature due to atmospheric conditions.
 
