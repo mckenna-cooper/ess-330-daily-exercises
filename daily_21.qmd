@@ -1,0 +1,90 @@
+---
+title: "Poudre River Streamflow Analysis (2013–2023)"
+author: "Your Name"
+format:
+  html:
+    self-contained: true
+    toc: true
+    code-fold: true
+editor: visual
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(tsibble)
+library(feasts)
+library(fabletools)
+library(dataRetrieval)
+library(plotly)
+library(lubridate)
+```
+
+## Load and Prepare Streamflow Data
+
+```{r}
+library(dataRetrieval)
+
+# Example: Cache la Poudre River at Mouth (USGS site 06752260)
+poudre_flow <- readNWISdv(siteNumber = "06752260",    # Download data from USGS for site 06752260
+                          parameterCd = "00060",      # Parameter code 00060 = discharge in cfs)
+                          startDate = "2013-01-01",   # Set the start date
+                          endDate = "2023-12-31") |>  # Set the end date
+  renameNWISColumns() |>                              # Rename columns to standard names (e.g., "Flow", "Date")
+  mutate(Date = yearmonth(Date)) |>                   # Convert daily Date values into a year-month format (e.g., "2023 Jan")
+  group_by(Date) |>                                   # Group the data by the new monthly Date
+  summarise(Flow = mean(Flow))                       # Calculate the average daily flow for each month
+
+```
+
+## 1. Convert to tsibble
+
+```{r}
+# Convert to tsibble
+poudre_ts <- poudre_flow |>
+  as_tsibble(index = Date)
+
+poudre_ts
+```
+
+## 2. Plot the Time Series
+
+```{r}
+# Create a static ggplot
+p <- ggplot(poudre_ts, aes(x = Date, y = Flow)) +
+  geom_line(color = "royalblue") +
+  labs(title = "Monthly Mean Streamflow: Cache la Poudre River (2013–2023)",
+       x = "Date", y = "Flow (cfs)") +
+  theme_minimal()
+
+# Interactive version with plotly
+ggplotly(p)
+
+```
+
+## 3. Subseries Plot (Seasonality)
+
+```{r}
+gg_subseries(poudre_ts, Flow)
+```
+
+### Interpretation
+
+In the subseries plot, **"seasons"** are defined as calendar months (Jan–Dec). Each panel shows the variation of stream flow in that specific month across all years (2013–2023).
+
+You can clearly observe a **recurring peak in May–June**, likely due to snowmelt runoff. This reflects a **strong seasonal cycle**. The subseries show how much stream flow changes within each month over the years, useful for identifying predictable annual patterns.
+
+## 4. STL Decomposition
+
+```{r}
+# STL decomposition
+decomp <- poudre_ts |>
+  model(STL(Flow ~ season(window = "periodic")))
+
+# Plot components
+components(decomp) |>
+  autoplot()
+```
+
+### Interpretation
+
+The **trend** component shows long-term variations like multi-year increases or declines in streamflow. The **seasonal** component shows consistent annual peaks (May–June) and troughs (fall–winter). The **remainder** captures anomalies such as unexpected high flows from rain events or droughts not explained by the trend or seasonality.
